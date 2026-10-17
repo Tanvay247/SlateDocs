@@ -36,9 +36,17 @@ export const Indent = Extension.create<IndentOptions>({
             parseHTML: element => {
               const margin = element.style.marginLeft;
               if (!margin) return this.options.defaultIndentLevel;
-              const match = margin.match(/^(\d+(?:\.\d+)?)rem$/);
-              if (match) {
-                return Math.round(parseFloat(match[1]) / 2); 
+              const remMatch = margin.match(/^(\d+(?:\.\d+)?)rem$/);
+              if (remMatch) {
+                return Math.round(parseFloat(remMatch[1]) / 2); 
+              }
+              const pxMatch = margin.match(/^(\d+(?:\.\d+)?)px$/);
+              if (pxMatch) {
+                return Math.round(parseFloat(pxMatch[1]) / 32); 
+              }
+              const ptMatch = margin.match(/^(\d+(?:\.\d+)?)pt$/);
+              if (ptMatch) {
+                return Math.round(parseFloat(ptMatch[1]) / 24); 
               }
               return this.options.defaultIndentLevel;
             },
@@ -58,7 +66,7 @@ export const Indent = Extension.create<IndentOptions>({
 
   addCommands() {
     return {
-      indent: () => ({ editor, commands }) => {
+      indent: () => ({ tr, state, dispatch, editor, commands }) => {
         // 1. If inside a table, let the table extension handle Tab → next cell
         if (editor.isActive('table')) {
           if (editor.can().goToNextCell()) {
@@ -81,24 +89,31 @@ export const Indent = Extension.create<IndentOptions>({
           return commands.sinkListItem('listItem');
         }
         
-        // 4. Otherwise indent paragraph/heading
-        let executed = false;
-        for (const type of this.options.types) {
-          if (editor.isActive(type)) {
-            const currentIndent = editor.getAttributes(type).indent || 0;
-            const maxIndent = this.options.indentLevels[this.options.indentLevels.length - 1];
+        // 4. Otherwise indent paragraph/heading blocks independently
+        const { from, to } = state.selection;
+        const maxIndent = this.options.indentLevels[this.options.indentLevels.length - 1];
+        let applied = false;
+
+        state.doc.nodesBetween(from, to, (node, pos) => {
+          if (this.options.types.includes(node.type.name)) {
+            const currentIndent = node.attrs.indent || 0;
             const nextIndent = Math.min(currentIndent + 1, maxIndent);
             if (nextIndent !== currentIndent) {
-              if (commands.updateAttributes(type, { indent: nextIndent })) {
-                executed = true;
+              if (dispatch) {
+                tr.setNodeMarkup(pos, undefined, {
+                  ...node.attrs,
+                  indent: nextIndent,
+                });
               }
+              applied = true;
             }
           }
-        }
-        return executed;
+        });
+
+        return applied;
       },
       
-      outdent: () => ({ editor, commands }) => {
+      outdent: () => ({ tr, state, dispatch, editor, commands }) => {
         // 1. If inside a table, let the table extension handle Shift-Tab → prev cell
         if (editor.isActive('table')) {
           if (editor.can().goToPreviousCell()) {
@@ -120,27 +135,31 @@ export const Indent = Extension.create<IndentOptions>({
           return commands.liftListItem('listItem');
         }
         
-        // 4. Otherwise outdent paragraph/heading
-        let executed = false;
-        for (const type of this.options.types) {
-          if (editor.isActive(type)) {
-            const currentIndent = editor.getAttributes(type).indent || 0;
-            const prevIndent = Math.max(currentIndent - 1, this.options.defaultIndentLevel);
-            
+        // 4. Otherwise outdent paragraph/heading blocks independently
+        const { from, to } = state.selection;
+        const defaultIndent = this.options.defaultIndentLevel;
+        let applied = false;
+
+        state.doc.nodesBetween(from, to, (node, pos) => {
+          if (this.options.types.includes(node.type.name)) {
+            const currentIndent = node.attrs.indent || 0;
+            const prevIndent = Math.max(currentIndent - 1, defaultIndent);
             if (prevIndent !== currentIndent) {
-              if (prevIndent === this.options.defaultIndentLevel) {
-                if (commands.resetAttributes(type, 'indent')) {
-                  executed = true;
+              if (dispatch) {
+                const attrs = { ...node.attrs };
+                if (prevIndent === defaultIndent) {
+                  delete attrs.indent;
+                } else {
+                  attrs.indent = prevIndent;
                 }
-              } else {
-                if (commands.updateAttributes(type, { indent: prevIndent })) {
-                  executed = true;
-                }
+                tr.setNodeMarkup(pos, undefined, attrs);
               }
+              applied = true;
             }
           }
-        }
-        return executed;
+        });
+
+        return applied;
       },
     };
   },

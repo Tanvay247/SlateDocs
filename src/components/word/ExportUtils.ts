@@ -58,13 +58,26 @@ export async function exportAsPDF(
   const { pageW, pageH } = getPageDimsPx(orientation);
   const contentWidth = pageW - margins.left - margins.right;
 
-  // Clone the editor HTML into an offscreen container for rendering
-  const container = document.createElement('div');
-  container.innerHTML = editor.getHTML();
+  // Clone the editor DOM directly into an offscreen container for rendering
+  const container = editor.view.dom.cloneNode(true) as HTMLElement;
   container.className = 'ProseMirror'; // Apply prosemirror.css styles
 
-  // Remove any page-break spacers from the clone
-  container.querySelectorAll('.page-break-spacer').forEach(el => el.remove());
+  // Adjust page-break-spacers so each spacer matches the remaining space on that page,
+  // preventing text lines and content from straddling page slice boundaries in the PDF.
+  container.querySelectorAll('.page-break-spacer').forEach(el => {
+    const spacer = el as HTMLElement;
+    spacer.style.display = 'block';
+    spacer.style.visibility = 'visible';
+    spacer.style.width = '100%';
+    const storedRemaining = spacer.getAttribute('data-remaining-on-page');
+    if (storedRemaining) {
+      spacer.style.height = `${parseFloat(storedRemaining)}px`;
+    } else {
+      const rawH = parseFloat(spacer.style.height) || 0;
+      const interGap = margins.bottom + 40 + margins.top; // 40 is PAGE_GAP
+      spacer.style.height = `${Math.max(0, rawH - interGap)}px`;
+    }
+  });
 
   // Apply print-ready styles — use setProperty to NOT overwrite user inline styles
   Object.assign(container.style, {
@@ -118,7 +131,7 @@ export async function exportAsPDF(
   container.querySelectorAll('p').forEach(el => {
     const htmlEl = el as HTMLElement;
     setDefaultStyle(htmlEl, 'margin-bottom', '0.75rem');
-    setDefaultStyle(htmlEl, 'font-size', '15px');
+    setDefaultStyle(htmlEl, 'font-size', '11pt');
     setDefaultStyle(htmlEl, 'line-height', '1.5');
     setDefaultStyle(htmlEl, 'color', '#334155');
   });
@@ -381,14 +394,22 @@ export async function exportAsDOCX(
     }
   }
 
-  async function processInlineContent(content: any[]): Promise<any[]> {
+  function getImageType(src?: string): 'png' | 'jpg' | 'gif' | 'bmp' {
+    if (!src) return 'png';
+    if (/data:image\/jpe?g/i.test(src) || /\.(jpe?g)(\?.*)?$/i.test(src)) return 'jpg';
+    if (/data:image\/gif/i.test(src) || /\.gif(\?.*)?$/i.test(src)) return 'gif';
+    if (/data:image\/bmp/i.test(src) || /\.bmp(\?.*)?$/i.test(src)) return 'bmp';
+    return 'png';
+  }
+
+  async function processInlineContent(content: any[], defaultBold: boolean = false): Promise<any[]> {
     const runs: any[] = [];
     if (!content) return runs;
 
     for (const item of content) {
       if (item.type === 'text') {
         const marks = item.marks || [];
-        const isBold = marks.some((m: any) => m.type === 'bold');
+        const isBold = defaultBold || marks.some((m: any) => m.type === 'bold');
         const isItalic = marks.some((m: any) => m.type === 'italic');
         const isUnderline = marks.some((m: any) => m.type === 'underline');
         const isStrike = marks.some((m: any) => m.type === 'strike');
@@ -560,6 +581,7 @@ export async function exportAsDOCX(
                 new ImageRun({
                   data: imgData,
                   transformation: { width, height },
+                  type: getImageType(src),
                 }),
               ],
               alignment: getAlignment(node.attrs),
@@ -643,7 +665,7 @@ export async function exportAsDOCX(
       case 'taskList': {
         if (node.content) {
           for (const taskItem of node.content) {
-            const checked = taskItem.attrs?.checked ? '☑' : '☐';
+            const checked = taskItem.attrs?.checked ? '\u2611' : '\u2610';
             const inlineChildren: any[] = [];
             if (taskItem.content) {
               for (const child of taskItem.content) {
@@ -684,25 +706,55 @@ export async function exportAsDOCX(
               const cells: InstanceType<typeof TableCell>[] = [];
               for (const cellNode of rowNode.content) {
                 if (cellNode.type === 'tableCell' || cellNode.type === 'tableHeader') {
+                  const isHeader = cellNode.type === 'tableHeader';
                   const cellParagraphs: InstanceType<typeof Paragraph>[] = [];
                   if (cellNode.content) {
                     for (const child of cellNode.content) {
                       if (child.type === 'paragraph') {
-                        const children = await processInlineContent(child.content || []);
+                        const children = await processInlineContent(child.content || [], isHeader);
                         if (children.length === 0) {
-                          children.push(new TextRun({ text: '' }));
+                          children.push(new TextRun({ text: '', bold: isHeader }));
                         }
-                        cellParagraphs.push(new Paragraph({ children }));
+                        cellParagraphs.push(
+                          new Paragraph({
+                            children,
+                            alignment: getAlignment(child.attrs),
+                            spacing: getBlockSpacing(child.attrs),
+                          })
+                        );
+                      } else if (child.type === 'bulletList' || child.type === 'orderedList') {
+                        const listType = child.type === 'bulletList' ? 'bullet' : 'ordered';
+                        if (child.content) {
+                          for (const li of child.content) {
+                            for (const lic of li.content || []) {
+                              if (lic.type === 'paragraph') {
+                                const runs = await processInlineContent(lic.content || [], isHeader);
+                                cellParagraphs.push(
+                                  new Paragraph({
+                                    children: runs.length > 0 ? runs : [new TextRun({ text: '', bold: isHeader })],
+                                    bullet: listType === 'bullet' ? { level: 0 } : undefined,
+                                    numbering: listType === 'ordered'
+                                      ? { reference: 'default-numbering', level: 0 }
+                                      : undefined,
+                                    alignment: getAlignment(lic.attrs),
+                                    spacing: getBlockSpacing(lic.attrs),
+                                  })
+                                );
+                              }
+                            }
+                          }
+                        }
                       }
                     }
                   }
                   if (cellParagraphs.length === 0) {
-                    cellParagraphs.push(new Paragraph({ children: [new TextRun({ text: '' })] }));
+                    cellParagraphs.push(new Paragraph({ children: [new TextRun({ text: '', bold: isHeader })] }));
                   }
                   cells.push(
                     new TableCell({
                       children: cellParagraphs,
                       width: { size: 0, type: WidthType.AUTO },
+                      shading: isHeader ? { fill: 'F1F5F9' } : undefined,
                     })
                   );
                 }

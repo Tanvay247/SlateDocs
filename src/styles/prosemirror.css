@@ -20,9 +20,13 @@
 }
 
 /* --- Text & Paragraphs --- */
+.ProseMirror > *:first-child {
+  margin-top: 0 !important;
+}
+
 .ProseMirror p {
   margin-bottom: 0.75rem;
-  font-size: 15px;
+  font-size: 11pt;
   color: #334155; /* slate-700 */
   line-height: 1.5;
 }
@@ -185,12 +189,65 @@
   overflow: hidden;
 }
 
-/* --- Code Block Overflow Protection --- */
+/* --- Blockquotes --- */
+.ProseMirror blockquote {
+  border-left: 3px solid #cbd5e1;
+  padding-left: 1rem;
+  margin-left: 0;
+  margin-right: 0;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.dark .ProseMirror blockquote {
+  border-left-color: #475569;
+  color: #94a3b8;
+}
+
+/* --- Code Blocks & Inline Code --- */
 .ProseMirror pre {
+  background-color: #f1f5f9;
+  color: #0f172a;
+  padding: 0.875rem 1rem;
+  border-radius: 0.375rem;
   overflow-x: auto;
   white-space: pre-wrap;
   overflow-wrap: break-word;
   word-wrap: break-word;
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.dark .ProseMirror pre {
+  background-color: #1e1e1e;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+}
+
+.ProseMirror code {
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-size: 0.875em;
+  background-color: #f1f5f9;
+  color: #0f172a;
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+}
+
+.dark .ProseMirror code {
+  background-color: #2a2a2a;
+  color: #e2e8f0;
+}
+
+.ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
 }
 
 /* --- Pagination Spacers --- */

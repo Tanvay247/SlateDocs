@@ -18,7 +18,7 @@ export const LineHeight = Extension.create<LineHeightOptions>({
 
   addOptions() {
     return {
-      types: ['paragraph', 'heading', 'listItem', 'taskItem'],
+      types: ['paragraph', 'heading'],
     };
   },
 

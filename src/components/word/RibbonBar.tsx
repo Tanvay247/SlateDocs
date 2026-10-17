@@ -5,8 +5,8 @@ import {
   Highlighter, Subscript, Superscript, Undo, Redo, ClipboardPaste, Scissors, Copy, 
   List, ListOrdered, ListTree, Baseline, IndentDecrease, IndentIncrease,
   Table as TableIcon, Image as ImageIcon, Link as LinkIcon, RemoveFormatting,
-  Columns, LayoutTemplate, Settings, Heading1, Heading2, Type, Search, Replace, GripHorizontal, ChevronDown, Check,
-  Download, FileText
+  Columns, LayoutTemplate, Search, Replace, ChevronDown, Check,
+  Download, FileText, GripHorizontal
 } from 'lucide-react';
 import type { PageMargin, PageOrientation } from './WordApp';
 import { exportAsPDF, exportAsDOCX } from './ExportUtils';
@@ -60,6 +60,8 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
     '#EEECE1', '#1F497D', '#4F81BD', '#C0504D', '#9BBB59', '#8064A2', '#4BACC6', '#F79646'
   ];
 
+  const FONT_SIZES = ['8', '9', '10', '11', '12', '14', '16', '18', '20', '24', '28', '36', '48', '72'];
+
   if (!editor) return <div className="h-[140px] bg-[#F3F4F6] dark:bg-[#212121] border-b border-slate-200 dark:border-[#3A3A3A] shrink-0" />;
 
   const toggleBold = () => editor.chain().focus().toggleBold().run();
@@ -95,16 +97,6 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
     }
   };
 
-  const setColor = (e: React.ChangeEvent<HTMLInputElement>) => {
-    editor.chain().focus().setColor(e.target.value).run();
-  };
-
-  const setHighlight = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const color = e.target.value;
-    setLastHighlightColor(color);
-    editor.chain().focus().setHighlight({ color }).run();
-  };
-
   const toggleHighlight = () => {
     if (editor.isActive('highlight')) {
       editor.chain().focus().unsetHighlight().run();
@@ -125,10 +117,15 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
     }
   };
   const setLink = () => {
-    const url = window.prompt('Enter URL');
-    if (url) {
-      editor.chain().focus().setLink({ href: url }).run();
+    const previousUrl = editor.getAttributes('link').href || '';
+    const url = window.prompt('Enter URL', previousUrl);
+    if (url === null) return; // Cancelled
+    if (url.trim() === '') {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
     }
+    const href = /^(https?:\/\/|mailto:|tel:)/i.test(url.trim()) ? url.trim() : `https://${url.trim()}`;
+    editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
   };
   const clearFormatting = () => editor.chain().focus().unsetAllMarks().clearNodes().run();
 
@@ -168,9 +165,7 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
   
   const handleCut = async () => {
     try {
-      const { from, to } = editor.state.selection;
-      const text = editor.state.doc.textBetween(from, to, '\n');
-      await navigator.clipboard.writeText(text);
+      await handleCopy();
       editor.chain().focus().deleteSelection().run();
     } catch {
       document.execCommand('cut');
@@ -242,8 +237,6 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
     if (!editor) return '1.0';
     let lh: string | null = null;
     if (editor.isActive('heading')) lh = editor.getAttributes('heading').lineHeight;
-    else if (editor.isActive('listItem')) lh = editor.getAttributes('listItem').lineHeight;
-    else if (editor.isActive('taskItem')) lh = editor.getAttributes('taskItem').lineHeight;
     else if (editor.isActive('paragraph')) lh = editor.getAttributes('paragraph').lineHeight;
     
     if (!lh) return '1.0';
@@ -336,20 +329,16 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
                     value={getCurrentFontSize()}
                   >
                     <option value="">Default</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
-                    <option value="11">11</option>
-                    <option value="12">12</option>
-                    <option value="14">14</option>
-                    <option value="16">16</option>
-                    <option value="18">18</option>
-                    <option value="20">20</option>
-                    <option value="24">24</option>
-                    <option value="28">28</option>
-                    <option value="36">36</option>
-                    <option value="48">48</option>
-                    <option value="72">72</option>
+                    {(() => {
+                      const currentSize = getCurrentFontSize();
+                      if (currentSize && !FONT_SIZES.includes(currentSize)) {
+                        return <option value={currentSize}>{currentSize}</option>;
+                      }
+                      return null;
+                    })()}
+                    {FONT_SIZES.map(sz => (
+                      <option key={sz} value={sz}>{sz}</option>
+                    ))}
                   </select>
                   
                   <div className="relative flex items-center">
@@ -558,6 +547,7 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
             <div className="flex flex-col justify-between border-r border-slate-200 dark:border-[#3A3A3A] pr-4 shrink-0">
               <div className="flex flex-col justify-center h-full gap-1.5 px-2">
                 <button 
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={insertTable}
                   className="flex flex-col items-center justify-center w-14 h-14 hover:bg-slate-100 dark:hover:bg-[#333333] rounded transition-colors text-slate-700 dark:text-slate-200"
                 >
@@ -573,6 +563,7 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
               <div className="flex flex-col justify-center h-full gap-1.5 px-2">
                 <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
                   <button 
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={insertImage}
                     className="flex flex-col items-center justify-center w-14 h-14 hover:bg-slate-100 dark:hover:bg-[#333333] rounded transition-colors"
                   >
@@ -588,6 +579,7 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
             <div className="flex flex-col justify-between border-r border-slate-200 dark:border-[#3A3A3A] pr-4 shrink-0">
               <div className="flex flex-col justify-center h-full gap-1.5 px-2">
                 <button 
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={setLink}
                   className="flex flex-col items-center justify-center w-14 h-14 hover:bg-slate-100 dark:hover:bg-[#333333] rounded transition-colors text-slate-700 dark:text-slate-200"
                 >
@@ -666,6 +658,7 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
             <div className="flex flex-col justify-between border-r border-slate-200 dark:border-[#3A3A3A] pr-4 shrink-0">
               <div className="flex items-center h-full gap-3 text-slate-700 dark:text-slate-200 px-2">
                 <button
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => editor && exportAsPDF(editor, docTitle, { pageMargin, pageOrientation })}
                   className="flex flex-col items-center justify-center w-16 h-14 hover:bg-slate-100 dark:hover:bg-[#333333] rounded transition-colors"
                 >
@@ -675,6 +668,7 @@ export function RibbonBar({ editor, pageMargin, setPageMargin, pageOrientation, 
                   <span className="text-[10px] font-semibold">PDF</span>
                 </button>
                 <button
+                  onMouseDown={(e) => e.preventDefault()}
                   onClick={() => editor && exportAsDOCX(editor, docTitle, { pageMargin, pageOrientation })}
                   className="flex flex-col items-center justify-center w-16 h-14 hover:bg-slate-100 dark:hover:bg-[#333333] rounded transition-colors"
                 >

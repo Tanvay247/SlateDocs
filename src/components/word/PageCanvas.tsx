@@ -67,34 +67,14 @@ export function PageCanvas({
   React.useEffect(() => {
     if (!editor) return;
 
-    const handleUpdate = () => {
-      const pluginState = PaginationPluginKey.getState(editor.state);
-      const pages = pluginState?.totalPages ?? 1;
-      setTotalPages(pages);
-    };
-
-    // Initial read
-    handleUpdate();
-
-    // Listen for editor state changes
-    editor.on('update', handleUpdate);
-    editor.on('create', handleUpdate);
-
-    return () => {
-      editor.off('update', handleUpdate);
-      editor.off('create', handleUpdate);
-    };
-  }, [editor]);
-
-  /* ---- Also observe when the Pagination plugin dispatches decoration changes ---- */
-  React.useEffect(() => {
-    if (!editor) return;
-
     const handleTransaction = () => {
       const pluginState = PaginationPluginKey.getState(editor.state);
       const pages = pluginState?.totalPages ?? 1;
       setTotalPages(prev => (prev !== pages ? pages : prev));
     };
+
+    // Initial read
+    handleTransaction();
 
     editor.on('transaction', handleTransaction);
     return () => {
@@ -110,8 +90,8 @@ export function PageCanvas({
     const onScroll = () => {
       const scrollTop = el.scrollTop;
       const unit = (pageH + PAGE_GAP) * scale;
-      // 40px marginTop + 50px absolute top offset = 90px before first page begins
-      const adjusted = Math.max(0, scrollTop - 90);
+      // Active page updates when the next page reaches the upper quarter / third of viewport
+      const adjusted = Math.max(0, scrollTop + el.clientHeight * 0.25 - 90);
       const cur = Math.max(1, Math.min(totalPages, Math.floor(adjusted / unit) + 1));
 
       pageInfoCallbackRef.current?.({ currentPage: cur, totalPages });
@@ -125,7 +105,7 @@ export function PageCanvas({
     return () => el.removeEventListener('scroll', onScroll);
   }, [totalPages, pageH, scale]);
 
-  /* ---- Click empty page area to focus editor at end ---- */
+  /* ---- Click empty page area to focus editor at clicked position or end ---- */
   const handlePageAreaClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!editor) return;
     // Only if clicking the background, not the editor content or rulers
@@ -137,7 +117,13 @@ export function PageCanvas({
     ) {
       return;
     }
-    editor.commands.focus('end');
+
+    const pos = editor.view.posAtCoords({ left: e.clientX, top: e.clientY });
+    if (pos && typeof pos.pos === 'number') {
+      editor.chain().focus().setTextSelection(pos.pos).run();
+    } else {
+      editor.commands.focus('end');
+    }
   };
 
   /* ---- Derived dimensions ---- */

@@ -135,7 +135,47 @@ function loadInitialTheme(): boolean {
   return document.documentElement.classList.contains('dark');
 }
 
-export function WordApp() {
+class WordErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('WordApp Error Boundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-slate-100 dark:bg-[#1E1E1E] text-slate-800 dark:text-slate-200 p-6">
+          <div className="max-w-md w-full bg-white dark:bg-[#2A2A2A] rounded-xl shadow-lg border border-slate-200 dark:border-zinc-700 p-6 text-center">
+            <h2 className="text-xl font-bold mb-2">Something went wrong</h2>
+            <p className="text-sm text-slate-600 dark:text-zinc-400 mb-4">
+              {this.state.error?.message || 'An unexpected error occurred in Slate Doc.'}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[#0078D4] hover:bg-[#0068B8] text-white rounded-lg text-sm font-semibold transition-colors"
+            >
+              Reload Application
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function WordAppInner() {
   const [initialData] = React.useState(loadStoredDocument);
   const [isDark, setIsDark] = React.useState(loadInitialTheme);
   const [docTitle, setDocTitle] = React.useState(initialData.doc.title);
@@ -179,6 +219,9 @@ export function WordApp() {
     }, 350);
   }, [writeStoredDocument]);
 
+  const isInitialLayoutMount = React.useRef(true);
+  const isInitialRulerMount = React.useRef(true);
+
   React.useEffect(() => {
     const flushPendingSave = () => {
       if (saveTimerRef.current !== null) {
@@ -188,9 +231,19 @@ export function WordApp() {
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushPendingSave();
+      }
+    };
+
     window.addEventListener('pagehide', flushPendingSave);
+    window.addEventListener('beforeunload', flushPendingSave);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       window.removeEventListener('pagehide', flushPendingSave);
+      window.removeEventListener('beforeunload', flushPendingSave);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       flushPendingSave();
     };
   }, [writeStoredDocument]);
@@ -225,7 +278,11 @@ export function WordApp() {
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+        link: false,
+        underline: false,
+      }),
       Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
@@ -275,20 +332,38 @@ export function WordApp() {
       zoom,
     };
 
+    // Force a re-render by dispatching a transaction
+    // This causes the pagination plugin's view.update() to fire immediately
+    try {
+      if (editor.view && !editor.isDestroyed) {
+        const { tr } = editor.state;
+        tr.setMeta('layoutChange', true);
+        tr.setMeta('addToHistory', false);
+        editor.view.dispatch(tr);
+      }
+    } catch (e) {
+      console.warn('Failed to dispatch layoutChange transaction:', e);
+    }
+
+    // Skip saving on initial mount
+    if (isInitialLayoutMount.current) {
+      isInitialLayoutMount.current = false;
+      return;
+    }
+
     // Persist layout settings
     layoutRef.current = { ...layoutRef.current, pageMargin, pageOrientation, zoom };
     scheduleSave();
-
-    // Force a re-render by dispatching a transaction
-    // This causes the pagination plugin's view.update() to fire immediately
-    const { tr } = editor.state;
-    tr.setMeta('layoutChange', true);
-    tr.setMeta('addToHistory', false);
-    editor.view.dispatch(tr);
   }, [editor, pageMargin, pageOrientation, zoom, scheduleSave]);
 
   /* ---- Persist showRuler ---- */
   React.useEffect(() => {
+    // Skip saving on initial mount
+    if (isInitialRulerMount.current) {
+      isInitialRulerMount.current = false;
+      return;
+    }
+
     layoutRef.current = { ...layoutRef.current, showRuler };
     scheduleSave();
   }, [showRuler, scheduleSave]);
@@ -409,5 +484,13 @@ export function WordApp() {
       />
       
     </div>
+  );
+}
+
+export function WordApp() {
+  return (
+    <WordErrorBoundary>
+      <WordAppInner />
+    </WordErrorBoundary>
   );
 }
