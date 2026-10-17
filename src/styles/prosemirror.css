@@ -1,0 +1,201 @@
+/* ============================================================
+   SlateDocs — ProseMirror / Tiptap Editor Styles
+   Dedicated styles for the document editor canvas.
+   Moved from inline Tailwind selectors for reliability.
+   ============================================================ */
+
+/* --- Editor Outline Reset & Word Wrapping --- */
+.ProseMirror {
+  outline: none;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.ProseMirror:focus {
+  outline: none;
+}
+
+/* --- Text & Paragraphs --- */
+.ProseMirror p {
+  margin-bottom: 0.75rem;
+  font-size: 15px;
+  color: #334155; /* slate-700 */
+  line-height: 1.5;
+}
+
+.dark .ProseMirror p {
+  color: #f1f5f9; /* slate-100 */
+}
+
+/* --- Headings --- */
+.ProseMirror h1 {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0f172a; /* slate-900 */
+  margin-bottom: 1.5rem;
+  margin-top: 1rem;
+  letter-spacing: -0.025em;
+}
+
+.dark .ProseMirror h1 {
+  color: #ffffff;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b; /* slate-800 */
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+  letter-spacing: -0.025em;
+}
+
+.dark .ProseMirror h2 {
+  color: #f1f5f9; /* slate-100 */
+}
+
+.ProseMirror h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b; /* slate-800 */
+  margin-bottom: 0.75rem;
+}
+
+.dark .ProseMirror h3 {
+  color: #e2e8f0; /* slate-200 */
+}
+
+/* --- Highlights in Dark Mode --- */
+.dark .ProseMirror mark {
+  color: #000000 !important;
+}
+
+/* --- Lists --- */
+.ProseMirror ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ProseMirror ol {
+  list-style-type: decimal;
+  padding-left: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* --- Task Lists --- */
+.ProseMirror ul[data-type="taskList"] {
+  list-style: none;
+  padding-left: 0;
+}
+
+.ProseMirror ul[data-type="taskList"] li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.ProseMirror ul[data-type="taskList"] li > label {
+  margin-top: 0.375rem;
+}
+
+/* --- Links --- */
+.ProseMirror a {
+  color: #2563eb; /* blue-600 */
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #1e40af; /* blue-800 */
+}
+
+.dark .ProseMirror a {
+  color: #60a5fa; /* blue-400 */
+}
+
+.dark .ProseMirror a:hover {
+  color: #93c5fd; /* blue-300 */
+}
+
+/* --- Images --- */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.25rem;
+  border: 1px solid #e2e8f0; /* slate-200 */
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6; /* blue-500 */
+  outline-offset: 0;
+}
+
+/* --- Tables --- */
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  margin: 1.5rem 0;
+  border-radius: 0.125rem;
+  overflow: hidden;
+}
+
+.ProseMirror td {
+  border: 1px solid #cbd5e1; /* slate-300 */
+  padding: 0.5rem;
+  min-width: 50px;
+}
+
+.dark .ProseMirror td {
+  border-color: #52525b; /* zinc-600 */
+}
+
+.ProseMirror th {
+  border: 1px solid #cbd5e1; /* slate-300 */
+  padding: 0.5rem;
+  background-color: #f1f5f9; /* slate-100 */
+  font-weight: 700;
+  text-align: left;
+}
+
+.dark .ProseMirror th {
+  border-color: #52525b; /* zinc-600 */
+  background-color: #1e1e1e;
+}
+
+.ProseMirror .selectedCell {
+  background-color: #eff6ff; /* blue-50 */
+}
+
+.dark .ProseMirror .selectedCell {
+  background-color: rgba(30, 58, 138, 0.3); /* blue-900/30 */
+}
+
+/* --- Table Cell Overflow Protection --- */
+.ProseMirror td,
+.ProseMirror th {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow: hidden;
+}
+
+/* --- Code Block Overflow Protection --- */
+.ProseMirror pre {
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+}
+
+/* --- Pagination Spacers --- */
+.page-break-spacer {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}

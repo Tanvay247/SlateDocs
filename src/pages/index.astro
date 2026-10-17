@@ -1,0 +1,315 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+
+/* --- Mock Data: Recent Documents --- */
+const recentDocs = [
+  { name: 'Q3 Revenue Report', app: 'word', modified: '2 hours ago', pages: 12 },
+  { name: 'Marketing Budget 2025', app: 'excel', modified: '5 hours ago', pages: 3 },
+  { name: 'Product Launch Deck', app: 'powerpoint', modified: 'Yesterday', pages: 24 },
+  { name: 'Engineering Retrospective', app: 'word', modified: 'Yesterday', pages: 8 },
+  { name: 'Sales Pipeline Tracker', app: 'excel', modified: '2 days ago', pages: 5 },
+  { name: 'Brand Guidelines v2', app: 'word', modified: '3 days ago', pages: 18 },
+];
+
+const templates = [
+  { name: 'Blank Document', app: 'word', description: 'Start fresh with a clean page' },
+  { name: 'Modern Resume', app: 'word', description: 'Professional ATS-friendly layout' },
+  { name: 'Business Report', app: 'word', description: 'Structured report with sections' },
+  { name: 'Cover Letter', app: 'word', description: 'Formal letter template' },
+];
+
+const appColors: Record<string, { bg: string; text: string; label: string }> = {
+  word: { bg: 'bg-[#EEF1F8] dark:bg-word/20', text: 'text-word dark:text-blue-300', label: 'Slate Doc' },
+  excel: { bg: 'bg-[#EDF6F0] dark:bg-excel/20', text: 'text-excel dark:text-emerald-300', label: 'Slate Sheet' },
+  powerpoint: { bg: 'bg-[#FCEEE9] dark:bg-powerpoint/20', text: 'text-powerpoint dark:text-orange-300', label: 'Slate Slide' },
+};
+---
+
+<AppLayout title="SlateDocs — Your Office Suite" activeApp="dashboard">
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- ========== HERO SECTION ========== -->
+    <section class="animate-fade-in mb-10" aria-labelledby="hero-heading">
+      <div class="relative rounded-2xl bg-[#FAF9F6] border border-[#E5E3DC] shadow-sm border-l-4 border-l-[#0078D4] dark:bg-[#2A2A2A] dark:border-[#3A3A3A] dark:border-l-[#0078D4] dark:shadow-none p-8 sm:p-10 overflow-hidden transition-colors duration-200">
+        <!-- Subtle decorative background accent -->
+        <div class="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[#0078D4]/10 blur-3xl pointer-events-none" aria-hidden="true"></div>
+
+        <div class="relative z-10">
+          <h1 id="hero-heading" class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-slate-100 mb-3 tracking-tight">
+            Welcome back
+          </h1>
+          <p class="text-slate-600 dark:text-zinc-400 text-sm sm:text-base max-w-xl leading-relaxed">
+            Create, edit, and collaborate on documents, spreadsheets, and presentations — all from your browser.
+          </p>
+
+          <!-- Quick Action Buttons -->
+          <div class="flex items-center gap-3 mt-6 flex-wrap">
+            <a
+              href="/word"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#0078D4] text-white text-sm font-semibold shadow-sm transition-all duration-200 hover:bg-[#0068B8] active:scale-[0.97]"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M14 2H2v12h12V2Z" stroke="currentColor" stroke-width="1.2"/>
+                <path d="M5 5h6M5 8h6M5 11h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              New Document
+            </a>
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#EFECE6] text-slate-800 hover:bg-[#E5E2DA] border border-[#E0DDD5] dark:bg-[#333333] dark:text-slate-200 dark:border-[#444444] dark:hover:bg-[#3D3D3D] text-sm font-semibold transition-all duration-200 active:scale-[0.97]"
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M14 10v2.667A1.333 1.333 0 0 1 12.667 14H3.333A1.333 1.333 0 0 1 2 12.667V10M11.333 5.333 8 2 4.667 5.333M8 2v8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Upload File
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== APP LAUNCHER ========== -->
+    <section class="mb-10" aria-labelledby="apps-heading">
+      <h2 id="apps-heading" class="text-sm font-semibold text-slate-700 dark:text-zinc-400 uppercase tracking-wider mb-4">
+        Applications
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+
+        <!-- Slate Doc Card -->
+        <a
+          href="/word"
+          class="group relative flex flex-col justify-between min-h-[160px] p-6 rounded-xl bg-[#FAF9F6] border border-[#E5E3DC] shadow-sm dark:bg-[#2A2A2A] dark:border-[#3A3A3A] dark:shadow-none overflow-hidden transition-all duration-300 hover:border-word/50 hover:shadow-lg hover:shadow-word/10 dark:hover:shadow-[0_0_25px_rgba(43,87,154,0.35)] hover:-translate-y-1 active:scale-[0.98] animate-slide-up stagger-1"
+          aria-label="Open Slate Doc Processor"
+        >
+          <!-- Background Ambient Glow -->
+          <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-word/10 dark:bg-word/25 blur-2xl group-hover:scale-150 transition-transform duration-500 pointer-events-none" aria-hidden="true"></div>
+
+          <div class="relative z-10 flex items-start justify-between mb-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-word text-white shadow-md shadow-word/20 transition-transform duration-300 group-hover:scale-105 flex-shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+                <line x1="10" y1="9" x2="8" y2="9"/>
+              </svg>
+            </div>
+            <svg class="text-slate-400 dark:text-zinc-500 group-hover:text-word transition-colors duration-200 flex-shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="relative z-10">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">Slate Doc</h3>
+            <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2">Documents, reports, letters, and manuscripts</p>
+          </div>
+        </a>
+
+        <!-- Slate Sheet Card -->
+        <a
+          href="/excel"
+          class="group relative flex flex-col justify-between min-h-[160px] p-6 rounded-xl bg-[#FAF9F6] border border-[#E5E3DC] shadow-sm dark:bg-[#2A2A2A] dark:border-[#3A3A3A] dark:shadow-none overflow-hidden transition-all duration-300 hover:border-excel/50 hover:shadow-lg hover:shadow-excel/10 dark:hover:shadow-[0_0_25px_rgba(33,115,70,0.35)] hover:-translate-y-1 active:scale-[0.98] animate-slide-up stagger-2"
+          aria-label="Open Spreadsheet Editor"
+        >
+          <!-- Background Ambient Glow -->
+          <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-excel/10 dark:bg-excel/25 blur-2xl group-hover:scale-150 transition-transform duration-500 pointer-events-none" aria-hidden="true"></div>
+
+          <div class="relative z-10 flex items-start justify-between mb-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-excel text-white shadow-md shadow-excel/20 transition-transform duration-300 group-hover:scale-105 flex-shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect width="18" height="18" x="3" y="3" rx="2"/>
+                <path d="M3 9h18"/>
+                <path d="M3 15h18"/>
+                <path d="M9 3v18"/>
+                <path d="M15 3v18"/>
+              </svg>
+            </div>
+            <svg class="text-slate-400 dark:text-zinc-500 group-hover:text-excel transition-colors duration-200 flex-shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="relative z-10">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">Slate Sheet</h3>
+            <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2">Spreadsheets, budgets, and data analysis</p>
+          </div>
+        </a>
+
+        <!-- Slate Slide Card -->
+        <a
+          href="/powerpoint"
+          class="group relative flex flex-col justify-between min-h-[160px] p-6 rounded-xl bg-[#FAF9F6] border border-[#E5E3DC] shadow-sm dark:bg-[#2A2A2A] dark:border-[#3A3A3A] dark:shadow-none overflow-hidden transition-all duration-300 hover:border-powerpoint/50 hover:shadow-lg hover:shadow-powerpoint/10 dark:hover:shadow-[0_0_25px_rgba(210,71,38,0.35)] hover:-translate-y-1 active:scale-[0.98] animate-slide-up stagger-3"
+          aria-label="Open Presentation Editor"
+        >
+          <!-- Background Ambient Glow -->
+          <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-powerpoint/10 dark:bg-powerpoint/25 blur-2xl group-hover:scale-150 transition-transform duration-500 pointer-events-none" aria-hidden="true"></div>
+
+          <div class="relative z-10 flex items-start justify-between mb-4">
+            <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-powerpoint text-white shadow-md shadow-powerpoint/20 transition-transform duration-300 group-hover:scale-105 flex-shrink-0">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M2 3h20"/>
+                <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/>
+                <path d="m7 21 5-5 5 5"/>
+              </svg>
+            </div>
+            <svg class="text-slate-400 dark:text-zinc-500 group-hover:text-powerpoint transition-colors duration-200 flex-shrink-0" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="relative z-10">
+            <h3 class="text-base font-semibold text-slate-900 dark:text-slate-100 mb-1">Slate Slide</h3>
+            <p class="text-xs text-slate-600 dark:text-zinc-400 leading-relaxed line-clamp-2">Presentations, pitch decks, and slideshows</p>
+          </div>
+        </a>
+
+      </div>
+    </section>
+
+    <!-- ========== RECENT DOCUMENTS ========== -->
+    <section class="mb-10" aria-labelledby="recent-heading">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="recent-heading" class="text-sm font-semibold text-slate-700 dark:text-zinc-400 uppercase tracking-wider">
+          Recent Documents
+        </h2>
+        <button
+          type="button"
+          class="text-xs text-[#0078D4] dark:text-sky-400 font-medium hover:underline transition-colors duration-200"
+        >
+          View all
+        </button>
+      </div>
+
+      <div class="bg-[#FAF9F6] border border-[#E5E3DC] shadow-sm dark:bg-[#2A2A2A] dark:border-[#3A3A3A] dark:shadow-none rounded-xl overflow-hidden transition-colors duration-200">
+        <div class="w-full overflow-x-auto">
+          <table class="w-full min-w-[540px]" role="table">
+            <thead>
+              <tr class="bg-[#EFECE6] text-slate-700 dark:bg-[#262626] dark:text-zinc-400 border-b border-[#E5E3DC] dark:border-[#3A3A3A]">
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" scope="col">Name</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" scope="col">Type</th>
+                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider" scope="col">Modified</th>
+                <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider whitespace-nowrap" scope="col">Pages</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentDocs.map((doc, i) => {
+                const app = appColors[doc.app];
+                return (
+                  <tr
+                    class:list={[
+                      'border-b border-[#ECEAE3] dark:border-[#333333] hover:bg-[#F0EDE7] dark:hover:bg-[#303030] group transition-colors duration-150 cursor-pointer animate-fade-in last:border-b-0',
+                      `stagger-${i + 1}`,
+                    ]}
+                    tabindex="0"
+                    role="row"
+                  >
+                    <td class="px-4 py-3 text-left">
+                      <div class="flex items-center gap-3">
+                        <div class:list={['flex items-center justify-center w-8 h-8 rounded-lg flex-shrink-0', app.bg, app.text]}>
+                          {doc.app === 'word' && (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                              <polyline points="14 2 14 8 20 8"/>
+                              <line x1="16" y1="13" x2="8" y2="13"/>
+                              <line x1="16" y1="17" x2="8" y2="17"/>
+                              <line x1="10" y1="9" x2="8" y2="9"/>
+                            </svg>
+                          )}
+                          {doc.app === 'excel' && (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <rect width="18" height="18" x="3" y="3" rx="2"/>
+                              <path d="M3 9h18"/>
+                              <path d="M3 15h18"/>
+                              <path d="M9 3v18"/>
+                              <path d="M15 3v18"/>
+                            </svg>
+                          )}
+                          {doc.app === 'powerpoint' && (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M2 3h20"/>
+                              <path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/>
+                              <path d="m7 21 5-5 5 5"/>
+                            </svg>
+                          )}
+                        </div>
+                        <span class="text-sm font-medium text-slate-900 dark:text-slate-100 group-hover:text-[#0078D4] dark:group-hover:text-sky-400 transition-colors duration-150 truncate">
+                          {doc.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3 text-left">
+                      <span class:list={['inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium whitespace-nowrap', app.bg, app.text]}>
+                        {app.label}
+                      </span>
+                    </td>
+                    <td class="px-4 py-3 text-left text-xs text-slate-600 dark:text-zinc-400 whitespace-nowrap">
+                      {doc.modified}
+                    </td>
+                    <td class="px-4 py-3 text-right text-xs text-slate-600 dark:text-zinc-400 font-mono whitespace-nowrap">
+                      {doc.pages}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== TEMPLATES SECTION ========== -->
+    <section class="mb-10" aria-labelledby="templates-heading">
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="templates-heading" class="text-sm font-semibold text-slate-700 dark:text-zinc-400 uppercase tracking-wider">
+          Start from a Template
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-5">
+        {templates.map((tpl, i) => (
+          <a
+            href="/word"
+            class:list={[
+              'group flex flex-col rounded-xl bg-[#FAF9F6] border border-[#E5E3DC] shadow-sm dark:bg-[#2A2A2A] dark:border-[#3A3A3A] dark:shadow-none overflow-hidden transition-all duration-300 hover:border-sky-400/60 dark:hover:border-sky-400/60 hover:shadow-lg hover:shadow-sky-500/10 dark:hover:shadow-[0_0_20px_rgba(56,189,248,0.2)] hover:-translate-y-0.5 active:scale-[0.98] animate-slide-up',
+              `stagger-${i + 1}`,
+            ]}
+            aria-label={`Create new document from ${tpl.name} template`}
+          >
+            <!-- Template Preview Area -->
+            <div class="relative h-28 sm:h-32 bg-[#F0EDE7] border-b border-[#E5E3DC] dark:bg-[#262626] dark:border-[#3A3A3A] flex items-center justify-center overflow-hidden flex-shrink-0 transition-colors duration-200">
+              {i === 0 ? (
+                /* Blank Document */
+                <div class="flex items-center justify-center w-10 h-10 rounded-full border-2 border-dashed border-slate-300 dark:border-zinc-600 text-slate-500 dark:text-zinc-500 group-hover:border-sky-400 group-hover:text-sky-400 dark:group-hover:border-sky-300 dark:group-hover:text-sky-300 transition-colors duration-200">
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  </svg>
+                </div>
+              ) : (
+                /* Document Preview Lines */
+                <div class="w-16 sm:w-20 space-y-1.5 opacity-40 group-hover:opacity-80 transition-opacity duration-200" aria-hidden="true">
+                  <div class="h-1.5 bg-slate-400 dark:bg-zinc-500 group-hover:bg-sky-400 dark:group-hover:bg-sky-400 transition-colors duration-200 rounded-full w-3/4"></div>
+                  <div class="h-1 bg-slate-300 dark:bg-zinc-700 group-hover:bg-sky-300 dark:group-hover:bg-sky-500 transition-colors duration-200 rounded-full"></div>
+                  <div class="h-1 bg-slate-300 dark:bg-zinc-700 group-hover:bg-sky-300 dark:group-hover:bg-sky-500 transition-colors duration-200 rounded-full"></div>
+                  <div class="h-1 bg-slate-300 dark:bg-zinc-700 group-hover:bg-sky-300 dark:group-hover:bg-sky-500 transition-colors duration-200 rounded-full w-5/6"></div>
+                  <div class="h-1 bg-slate-300 dark:bg-zinc-700 group-hover:bg-sky-300 dark:group-hover:bg-sky-500 transition-colors duration-200 rounded-full w-2/3"></div>
+                  <div class="h-1 bg-slate-300 dark:bg-zinc-700 group-hover:bg-sky-300 dark:group-hover:bg-sky-500 transition-colors duration-200 rounded-full"></div>
+                  <div class="h-1 bg-slate-300 dark:bg-zinc-700 group-hover:bg-sky-300 dark:group-hover:bg-sky-500 transition-colors duration-200 rounded-full w-4/5"></div>
+                </div>
+              )}
+            </div>
+
+            <!-- Template Info -->
+            <div class="p-4 flex-1 flex flex-col justify-center overflow-hidden">
+              <h3 class="text-xs font-semibold text-slate-900 dark:text-slate-100 mb-0.5 group-hover:text-sky-500 dark:group-hover:text-sky-300 transition-colors duration-150 truncate">
+                {tpl.name}
+              </h3>
+              <p class="text-[11px] text-slate-600 dark:text-zinc-400 leading-snug line-clamp-2">
+                {tpl.description}
+              </p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+
+  </div>
+
+</AppLayout>

@@ -1,0 +1,11 @@
+# Cloudflare Pages Configuration
+# Deploy with: npx wrangler pages deploy dist/
+name = "slatedocs"
+compatibility_date = "2025-01-01"
+
+[build]
+command = "npm run build"
+cwd = "."
+
+[build.upload]
+dir = "dist"

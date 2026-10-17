@@ -1,0 +1,10 @@
+---
+import AppLayout from '../../layouts/AppLayout.astro';
+import { WordApp } from '../../components/word/WordApp';
+---
+
+<AppLayout title="Slate Doc — SlateDocs" activeApp="word">
+  <div class="h-full w-full">
+    <WordApp client:only="react" />
+  </div>
+</AppLayout>
